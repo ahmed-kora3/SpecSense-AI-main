@@ -1,0 +1,14 @@
+# Ignore Virtual Environments
+cable_env/
+newenv/
+venv/
+__pycache__/
+*.pyc
+
+# Ignore Output Folders (عشان نتايج الفحص مترفعش وتعمل زحمة)
+Inspection_Results/
+runs/
+
+# Ignore System Files
+.DS_Store
+Thumbs.db

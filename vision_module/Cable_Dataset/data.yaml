@@ -1,0 +1,8 @@
+path: C:/Users/HP/Desktop/SpecSenseAI/vision_module/Cable_Dataset
+
+train: images/train
+val: images/val
+test: images/test
+
+nc: 1
+names: ['cable']

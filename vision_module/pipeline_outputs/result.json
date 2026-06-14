@@ -1,0 +1,20 @@
+{
+  "image": "C:\\Users\\HP\\Desktop\\SpecSenseAI\\vision_module\\Cable_Dataset\\images\\train\\IMG_6127_JPG.rf.c10a8d8b3b2576ac631e729809dc137b.jpg",
+  "cnn_prediction": {
+    "class": "medium_voltage",
+    "confidence": 0.9921
+  },
+  "vision_results": [
+    {
+      "Diameter (mm)": 22.49,
+      "Width (px)": 416,
+      "Voltage Class": "Low Voltage (0.6/1 kV)",
+      "Conductor": "Class 2 (Stranded Copper)",
+      "Insulation": "XLPE (Cross-linked PE)",
+      "Sheath Mat.": "PVC (Black/UV Resistant)",
+      "Cable Type": "Power Cable (Armoured)",
+      "Status": "PASS"
+    }
+  ],
+  "annotated_image": "C:\\Users\\HP\\Desktop\\SpecSenseAI\\vision_module\\pipeline_outputs\\ANNOTATED_IMG_6127_JPG.rf.c10a8d8b3b2576ac631e729809dc137b.jpg"
+}

@@ -1,0 +1,397 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: SpecSense AI API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: vision
+    description: Vision inspection module
+  - name: ocr
+    description: OCR and datasheet analysis module
+  - name: assistant
+    description: Intelligent technical assistant module
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /vision/inspect:
+    post:
+      operationId: visionInspect
+      tags: [vision]
+      summary: Inspect cable cross-section images
+      description: Analyzes cable cross-section images using YOLOv8 model
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+              required:
+                - files
+      responses:
+        "200":
+          description: Inspection results for each image
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VisionInspectResponse"
+
+  /ocr/analyze:
+    post:
+      operationId: ocrAnalyze
+      tags: [ocr]
+      summary: Analyze datasheet documents
+      description: Extracts specs, validates, and generates keywords from uploaded datasheets
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+              required:
+                - files
+      responses:
+        "200":
+          description: OCR analysis results for each document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OcrAnalyzeResponse"
+
+  /assistant/calculate-feeder:
+    post:
+      operationId: calculateFeeder
+      tags: [assistant]
+      summary: Calculate external feeder cable
+      description: Calculates required cable size for a given electrical load
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CalculateFeederRequest"
+      responses:
+        "200":
+          description: Calculation results and AI explanation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CalculateFeederResponse"
+
+  /assistant/design-wiring:
+    post:
+      operationId: designWiring
+      tags: [assistant]
+      summary: Design internal wiring circuits
+      description: Designs internal apartment wiring circuits based on load parameters
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DesignWiringRequest"
+      responses:
+        "200":
+          description: Circuit design results and AI explanation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DesignWiringResponse"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    CableInspectionResult:
+      type: object
+      properties:
+        diameter_mm:
+          type: number
+        status:
+          type: string
+        voltage_class:
+          type: string
+        cable_type:
+          type: string
+        details:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+        - diameter_mm
+        - status
+        - voltage_class
+        - cable_type
+        - details
+
+    ImageInspectionResult:
+      type: object
+      properties:
+        filename:
+          type: string
+        cables:
+          type: array
+          items:
+            $ref: "#/components/schemas/CableInspectionResult"
+        error:
+          type: string
+      required:
+        - filename
+        - cables
+
+    VisionInspectResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImageInspectionResult"
+      required:
+        - results
+
+    ValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        status:
+          type: string
+        errors:
+          type: array
+          items:
+            type: string
+        missing:
+          type: array
+          items:
+            type: string
+      required:
+        - valid
+        - status
+        - errors
+        - missing
+
+    DocumentAnalysisResult:
+      type: object
+      properties:
+        filename:
+          type: string
+        extracted_specs:
+          type: object
+          additionalProperties: {}
+        correction_log:
+          type: array
+          items:
+            type: string
+        validation:
+          $ref: "#/components/schemas/ValidationResult"
+        category:
+          type: string
+        keywords:
+          type: object
+          additionalProperties: {}
+        error:
+          type: string
+      required:
+        - filename
+        - extracted_specs
+        - correction_log
+        - validation
+        - category
+        - keywords
+
+    OcrAnalyzeResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentAnalysisResult"
+      required:
+        - results
+
+    CalculateFeederRequest:
+      type: object
+      properties:
+        total_power_w:
+          type: number
+        system_type:
+          type: string
+          enum: [single, three]
+        voltage:
+          type: number
+        distance_m:
+          type: number
+      required:
+        - total_power_w
+        - system_type
+        - voltage
+        - distance_m
+
+    CalculateFeederResponse:
+      type: object
+      properties:
+        total_power_w:
+          type: number
+        current_a:
+          type: number
+        safe_current_a:
+          type: number
+        recommended_cable_mm2:
+          type: number
+        initial_cable_mm2:
+          type: number
+        voltage_drop_v:
+          type: number
+        voltage_drop_pct:
+          type: number
+        voltage_drop_status:
+          type: string
+        validation_warnings:
+          type: array
+          items:
+            type: string
+        ai_explanation:
+          type: string
+        error:
+          type: string
+      required:
+        - total_power_w
+        - current_a
+        - safe_current_a
+        - recommended_cable_mm2
+        - voltage_drop_v
+        - voltage_drop_pct
+        - voltage_drop_status
+        - validation_warnings
+        - ai_explanation
+
+    DesignWiringRequest:
+      type: object
+      properties:
+        num_rooms:
+          type: integer
+        num_acs:
+          type: integer
+        num_lights:
+          type: integer
+        num_sockets:
+          type: integer
+        has_kitchen:
+          type: boolean
+        light_w:
+          type: number
+        socket_w:
+          type: number
+        ac_w:
+          type: number
+        kitchen_w:
+          type: number
+        lighting_df:
+          type: number
+        socket_df:
+          type: number
+      required:
+        - num_rooms
+        - num_acs
+        - num_lights
+        - num_sockets
+        - has_kitchen
+        - light_w
+        - socket_w
+        - ac_w
+        - kitchen_w
+        - lighting_df
+        - socket_df
+
+    Circuit:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        power_w:
+          type: number
+        current_a:
+          type: number
+        cable_size_mm2:
+          type: number
+        mcb_a:
+          type: number
+        length_m:
+          type: number
+      required:
+        - id
+        - type
+        - power_w
+        - current_a
+        - cable_size_mm2
+        - mcb_a
+        - length_m
+
+    WiringSummary:
+      type: object
+      properties:
+        total_power_w:
+          type: number
+        total_power_diversified_w:
+          type: number
+        cable_totals:
+          type: object
+          additionalProperties:
+            type: number
+      required:
+        - total_power_w
+        - total_power_diversified_w
+        - cable_totals
+
+    DesignWiringResponse:
+      type: object
+      properties:
+        circuits:
+          type: array
+          items:
+            $ref: "#/components/schemas/Circuit"
+        summary:
+          $ref: "#/components/schemas/WiringSummary"
+        ai_explanation:
+          type: string
+      required:
+        - circuits
+        - summary
+        - ai_explanation

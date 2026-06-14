@@ -1,0 +1,54 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.mypy_cache
+.pytest_cache
+.hypothesize
+
+# Model specific
+models_cache/
+*.pth
+*.pt
+*.onnxmodels_cache/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Project specific
+.env
+.DS_Store
+
+# Excluded folders as requested
+test-branch/
+raw/
+SpecSenseAI_React.zip
+SpecSenseAI_React/
+
+# Node & JS Build artifacts
+node_modules/
+dist/
+.npm
+*.log
+*.tsbuildinfo
+
+# Scratch and temp files
+scratch/
