@@ -40,7 +40,76 @@ SpecSense-AI/
 
 ---
 
-## ✨ Key Features
+## 🎨 Frontend Architecture & Integration Details
+
+### 1. Frontend Technologies & Component Structure
+The frontend UI is built as a single-page application (SPA) in `artifacts/frontend/`:
+
+- **React 19 + TypeScript:** Strongly-typed component architecture ensuring type safety across API interactions.
+- **Vite 7:** High-speed development server with Instant Hot Module Replacement (HMR) and optimized build bundling.
+- **[Wouter](artifacts/frontend/src/App.tsx):** Minimalist client-side router managing application routes (`/dashboard`, `/vision`, `/ocr`, `/assistant`).
+- **[TanStack Query (React Query v5)](artifacts/frontend/src/pages/VisionPage.tsx):** Asynchronous state management handling server data fetching (`useQuery`) and mutation workflows (`useMutation`).
+- **Custom Glassmorphism CSS System (`src/index.css`):** Bespoke dark-mode UI design system featuring micro-animations, glassmorphism cards, and responsive layouts.
+
+### 2. Application Pages & Functions (`src/pages/`)
+- **[DashboardPage.tsx](artifacts/frontend/src/pages/DashboardPage.tsx):** Real-time analytics dashboard rendering inspection metrics, OCR statistics, and recent project logs fetched from `/api/stats` and `/api/history/*`.
+- **[VisionPage.tsx](artifacts/frontend/src/pages/VisionPage.tsx):** Drag-and-drop image upload interface sending `multipart/form-data` to `/api/vision/inspect`. Renders YOLOv8 segmentation overlays inline via Base64 along with quality control pass/fail badges.
+- **[OcrPage.tsx](artifacts/frontend/src/pages/OcrPage.tsx):** Document analyzer uploading PDF/images to `/api/ocr/analyze`. Renders extracted technical specifications, typo correction logs, engineering validation warnings, and keyword badges.
+- **[AssistantPage.tsx](artifacts/frontend/src/pages/AssistantPage.tsx):** Three-in-one engineering suite:
+  1. *Gemini AI Natural Language Parser:* Converts plain text (Arabic/English) into structured electrical parameters.
+  2. *Feeder Cable Sizing Calculator:* Computes current load ($I$), voltage drop ($V_{drop}$), and recommended cable gauge ($mm^2$).
+  3. *Internal Wiring Designer:* Generates complete circuit layout, breaker sizing, and cable requirements for residential & commercial units.
+
+---
+
+### 🔗 Frontend-Backend Integration Pipeline
+
+Integration between the React SPA and the FastAPI backend is designed for seamless operation in both development and production environments:
+
+```
+[ React SPA (Vite) ] ── (Port 5173 Dev / Port 8000 Prod) ──► [ FastAPI Server ]
+         │                                                           │
+         ├── POST /api/vision/inspect ───────► YOLOv8 Segmentation   │
+         ├── POST /api/ocr/analyze ──────────► EasyOCR + SpaCy       │
+         ├── POST /api/assistant/parse-project ► Gemini AI API       │
+         └── GET  /api/stats ────────────────► PostgreSQL / Memory    │
+```
+
+#### 1️⃣ Development Environment (Vite Proxy + CORS)
+- **Frontend Server:** Runs on `http://localhost:5173`.
+- **Backend API:** Runs on `http://127.0.0.1:8000`.
+- **Vite Proxy Configuration (`vite.config.ts`):** Requests starting with `/api` are automatically proxied to the backend target:
+  ```typescript
+  server: {
+    port: 5173,
+    proxy: {
+      "/api": {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
+    },
+  }
+  ```
+- **FastAPI CORS Middleware (`server.py`):** Configured with `CORSMiddleware` to explicitly allow requests originating from `http://localhost:5173`.
+
+#### 2️⃣ Production Environment (Single-Server Hosting)
+- Executing `pnpm build` compiles the React application into optimized static assets in `artifacts/frontend/dist`.
+- **FastAPI Static File Mounting (`server.py`):** The backend dynamically mounts the compiled frontend directory at root `/`:
+  ```python
+  frontend_dist = os.path.join(os.path.dirname(__file__), "artifacts", "frontend", "dist")
+  if os.path.exists(frontend_dist):
+      app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
+  ```
+- *Result:* In production, FastAPI serves both the React SPA and the REST API endpoints synchronously from a single port (`8000`).
+
+#### 3️⃣ Data Exchange Protocol
+- **File Uploads:** Uploaded documents and images are transmitted via `multipart/form-data` using `FormData`.
+- **Inline Image Rendering:** YOLO output images are encoded as **Base64 strings** inside the JSON response and directly rendered by React via `<img src="data:image/jpeg;base64,..." />`, eliminating temporary server image files.
+- **Structured JSON Payloads:** All request/response bodies are validated against Pydantic models (`HealthStatus`, `ParseProjectRequest`, `CalculateFeederRequest`, `DesignWiringRequest`).
+
+---
+
+## ✨ Key Features Summary
 
 ### 1. 👁️ Computer Vision Inspection (`vision_module/`)
 - Uses custom-trained **YOLOv8-Segmentation** models (`yolov8m-seg.pt`).
